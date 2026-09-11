@@ -1,0 +1,23 @@
+# Virtual environment
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# PyCharm
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML data
+data/raw/*
+data/splits/*
+
+# Trained models
+models/*
+
+# OS
+.DS_Store
+Thumbs.db
