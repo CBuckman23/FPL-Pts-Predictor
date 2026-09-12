@@ -3,6 +3,8 @@ from urllib.request import urlopen
 import json
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import OneHotEncoder
 import pyarrow
 
 #base url for all endpoints
@@ -115,6 +117,47 @@ gameweek_info = players_data_df.drop(columns = ['element', 'id']) #Final df crea
 
 train_df, val_df = train_test_split(gameweek_info, test_size = 0.2, random_state=42)
 
-gameweek_info.to_parquet('data/raw/game_week_info.parquet')
-train_df.to_parquet('data/splits/train_df.parquet')
-val_df.to_parquet('data/splits/val_df.parquet') #Saves the files to parquet
+
+
+#Model Training
+'''
+Identify inputs & targets - ✓
+Identify numerical & categorical columns - ✓
+Impute missing values - ✓
+Scale numeric values 0,1 range - ✓
+Encode categorical columns - ✓
+'''
+train_inputs = train_df.drop('target_points', axis = 1)
+train_targets = train_df['target_points'] # Set inputs and targets
+
+val_inputs = val_df.drop('target_points', axis = 1)
+val_targets = val_df['target_points']
+
+numeric_cols = ['total_points', 'total_points_2', 'minutes', 'minutes_2', 'ict_index', 'ict_index_2', 'expected_goal_involvements', 'expected_goal_involvements_2', 'expected_goals_conceded', 'expected_goals_conceded_2']
+categoric_cols =['target_was_home', 'element_type']
+
+#Scale the numeric features
+scaler = MinMaxScaler().fit(train_inputs[numeric_cols])
+
+train_inputs[numeric_cols]= scaler.transform(train_inputs[numeric_cols])
+val_inputs[numeric_cols]= scaler.transform(val_inputs[numeric_cols])
+
+#Encode the categoric columns
+#Map the home/away data to binary 0/1
+home_away_codes = {True:1, False:0}
+train_inputs['target_was_home']=train_inputs['target_was_home'].map(home_away_codes)
+val_inputs['target_was_home']=val_inputs['target_was_home'].map(home_away_codes)
+
+#Encode the positions using one hot encoding
+encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore').fit(train_inputs[['element_type']])
+encoded_cols = list(encoder.get_feature_names_out(['element_type']))
+train_inputs[encoded_cols]= encoder.transform(train_inputs[['element_type']])
+val_inputs[encoded_cols]= encoder.transform(val_inputs[['element_type']])
+train_inputs.drop('element_type', axis = 1)
+val_inputs.drop('element_type', axis = 1) #Drop the position columns as they have now been encoded
+
+#Save inputs and targets dataframes as parquet
+train_inputs.to_parquet('data/splits/train-inputs.parquet')
+val_inputs.to_parquet('data/splits/val-inputs.parquet')
+pd.DataFrame(train_targets).to_parquet('data/splits/train-targets.parquet', index = False)
+pd.DataFrame(val_targets).to_parquet('data/splits/val-targets.parquet', index = False)
