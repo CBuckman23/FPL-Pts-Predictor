@@ -3,6 +3,7 @@ from urllib.request import urlopen
 import json
 import numpy as np
 import pandas as pd
+import pyarrow
 
 #base url for all endpoints
 base_url = 'https://fantasy.premierleague.com/api/'
@@ -110,8 +111,10 @@ players_data_df = players_data_df.dropna(subset='target_points') #Drops all the 
 #Merge all relevant data into one df called gameweek info
 #Merge players_data and player dfs on id/element
 players_data_df = players_data_df.merge(players_df,how = 'inner', left_on='element', right_on='id')
-gameweek_info = players_data_df.drop(columns = ['element', 'id'], axis=1) #Final df created with inputs and targets
+gameweek_info = players_data_df.drop(columns = ['element', 'id']) #Final df created with inputs and targets
 
 train_df, val_df = train_test_split(gameweek_info, test_size = 0.2, random_state=42)
-train_df.to_parquet('train_df.parquet')
-val_df.to_parquet('val_df.parquet')
+
+gameweek_info.to_parquet('data/raw/game_week_info.parquet')
+train_df.to_parquet('data/splits/train_df.parquet')
+val_df.to_parquet('data/splits/val_df.parquet') #Saves the files to parquet
