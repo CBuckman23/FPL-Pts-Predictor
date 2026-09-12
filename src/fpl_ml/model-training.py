@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
+import joblib
 from pathlib import Path
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import OneHotEncoder
 from scipy.stats import spearmanr
 from sklearn.metrics import r2_score, mean_absolute_error
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
 
 #Functions
 def rmse(predictions, targets):
@@ -33,6 +34,7 @@ def save_model_stats(predictions, targets, model_name):
     )
 
 
+
 def return_spearman_r(predictions, targets):
     try:
         rho, p_value = spearmanr(predictions, targets)
@@ -53,3 +55,17 @@ baseline_targets = og_val_targets
 
 save_model_stats(baseline_predictions_mean, baseline_targets, 'baseline')
 save_model_stats(baseline_predictions_last_week,baseline_targets, 'baseline_last_week')
+
+#Train models
+
+#Initial decision tree model
+initial_dec_tree = DecisionTreeRegressor(max_depth=2, random_state=42).fit(og_train_inputs, og_train_targets)
+initial_dec_tree_val_preds = initial_dec_tree.predict(og_val_inputs)
+save_model_stats(initial_dec_tree_val_preds, og_val_targets, 'initial_dec_tree')
+joblib.dump(initial_dec_tree, 'models/initial_dec_tree.joblib')
+
+#Initial random forest model
+initial_ran_for = RandomForestRegressor(max_depth=2, random_state=42).fit(og_train_inputs, og_train_targets)
+initial_ran_for_val_preds = initial_ran_for.predict(og_val_inputs)
+save_model_stats(initial_ran_for_val_preds, og_val_targets, 'initial_ran_for')
+joblib.dump(initial_ran_for, 'models/initial_ran_for.joblib')
