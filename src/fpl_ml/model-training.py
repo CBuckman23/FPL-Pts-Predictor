@@ -43,15 +43,18 @@ def return_spearman_r(predictions, targets):
     return rho, p_value
 
 #Load inputs and targets from parquet files
-og_train_inputs = pd.read_parquet('data/splits/train-inputs.parquet')
-og_val_inputs = pd.read_parquet('data/splits/train-inputs.parquet')
-og_train_targets = pd.Series(pd.read_parquet('data/splits/train-targets.parquet')['target_points'])
-og_val_targets = pd.Series(pd.read_parquet('data/splits/train-targets.parquet')['target_points'])
+baseline_val_inputs = pd.read_parquet('data/splits/val-inputs.parquet')
+baseline_train_targets = pd.read_parquet('data/splits/train-targets.parquet')
+baseline_val_targets = pd.read_parquet('data/splits/val-targets.parquet')
 
+initial_train_inputs = pd.read_parquet('data/splits/initial-model/initial_train_inputs.parquet')
+initial_val_inputs = pd.read_parquet('data/splits/initial-model/initial_val_inputs.parquet')
+initial_train_targets =pd.read_parquet('data/splits/train-targets.parquet')
+initial_val_targets = pd.read_parquet('data/splits/val-targets.parquet')
 #Baseline models
-baseline_predictions_mean = [og_train_targets.mean()]*len(og_val_targets)
-baseline_predictions_last_week = og_val_inputs['total_points']
-baseline_targets = og_val_targets
+baseline_predictions_mean = [baseline_train_targets.mean()]*len(baseline_val_targets) #Baseline is just predicting the mean
+baseline_predictions_last_week = baseline_val_inputs['total_points_2']
+baseline_targets = baseline_val_targets
 
 save_model_stats(baseline_predictions_mean, baseline_targets, 'baseline')
 save_model_stats(baseline_predictions_last_week,baseline_targets, 'baseline_last_week')
@@ -59,13 +62,25 @@ save_model_stats(baseline_predictions_last_week,baseline_targets, 'baseline_last
 #Train models
 
 #Initial decision tree model
-initial_dec_tree = DecisionTreeRegressor(max_depth=2, random_state=42).fit(og_train_inputs, og_train_targets)
-initial_dec_tree_val_preds = initial_dec_tree.predict(og_val_inputs)
-save_model_stats(initial_dec_tree_val_preds, og_val_targets, 'initial_dec_tree')
+
+
+initial_dec_tree = DecisionTreeRegressor(max_depth=2, random_state=42).fit(initial_train_inputs, initial_train_targets)
+initial_dec_tree_val_preds = initial_dec_tree.predict(initial_val_inputs)
+save_model_stats(initial_dec_tree_val_preds, initial_val_targets, 'initial_dec_tree')
 joblib.dump(initial_dec_tree, 'models/initial_dec_tree.joblib')
 
 #Initial random forest model
-initial_ran_for = RandomForestRegressor(max_depth=2, random_state=42).fit(og_train_inputs, og_train_targets)
-initial_ran_for_val_preds = initial_ran_for.predict(og_val_inputs)
-save_model_stats(initial_ran_for_val_preds, og_val_targets, 'initial_ran_for')
+initial_ran_for = RandomForestRegressor(max_depth=2, random_state=42).fit(initial_train_inputs, initial_train_targets)
+initial_ran_for_val_preds = initial_ran_for.predict(initial_val_inputs)
+save_model_stats(initial_ran_for_val_preds, initial_val_targets, 'initial_ran_for')
 joblib.dump(initial_ran_for, 'models/initial_ran_for.joblib')
+
+'''GK model
+train_inputs_gk = initial_train_inputs.loc[initial_train_inputs['element_type']==1]
+val_inputs_gk = initial_val_inputs.loc[og_val_inputs['element_type']==1]
+train_inputs_gk = train_inputs_gk[['total_points', 'total_points_2', 'minutes', 'minutes_2', 'expected_goals_conceded', 'expected_goals_conceded_2','target_fdr', 'target_was_home']]
+val_inputs_gk = val_inputs_gk[['total_points', 'total_points_2', 'minutes', 'minutes_2', 'expected_goals_conceded', 'expected_goals_conceded_2','target_fdr', 'target_was_home']]
+
+#train_targets_gk = og_train_targets.loc[og_train_df['element_type']==1]['target_points']
+#val_targets_gk = val_df.loc[val_df['element_type']==1]['target_points']'''
+print(initial_train_inputs.info())

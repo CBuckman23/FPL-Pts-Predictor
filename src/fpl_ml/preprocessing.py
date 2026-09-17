@@ -153,8 +153,6 @@ encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore').fit(train_
 encoded_cols = list(encoder.get_feature_names_out(['element_type']))
 train_inputs[encoded_cols]= encoder.transform(train_inputs[['element_type']])
 val_inputs[encoded_cols]= encoder.transform(val_inputs[['element_type']])
-train_inputs.drop('element_type', axis = 1)
-val_inputs.drop('element_type', axis = 1) #Drop the position columns as they have now been encoded
 
 #Save inputs and targets dataframes as parquet
 train_inputs.to_parquet('data/splits/train-inputs.parquet')
