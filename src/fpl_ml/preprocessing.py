@@ -154,8 +154,14 @@ encoded_cols = list(encoder.get_feature_names_out(['element_type']))
 train_inputs[encoded_cols]= encoder.transform(train_inputs[['element_type']])
 val_inputs[encoded_cols]= encoder.transform(val_inputs[['element_type']])
 
+#Create dataframe with scaled features by merging inputs and targets
+train_df = train_inputs.merge(train_targets, how = 'inner', left_index=True, right_index=True)
+val_df =  val_inputs.merge(val_targets, how = 'inner', left_index=True, right_index=True)
 #Save inputs and targets dataframes as parquet
 train_inputs.to_parquet('data/splits/train-inputs.parquet')
 val_inputs.to_parquet('data/splits/val-inputs.parquet')
+train_df.to_parquet('data/raw/train-df.parquet')
+val_df.to_parquet('data/raw/val-df.parquet')
 pd.DataFrame(train_targets).to_parquet('data/splits/train-targets.parquet', index = False)
 pd.DataFrame(val_targets).to_parquet('data/splits/val-targets.parquet', index = False)
+
