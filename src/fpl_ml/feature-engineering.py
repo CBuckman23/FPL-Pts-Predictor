@@ -4,9 +4,7 @@ import numpy as np
 train_df = pd.read_parquet('data/raw/train-df.parquet')
 val_df = pd.read_parquet('data/raw/val-df.parquet')
 train_inputs = pd.read_parquet('data/splits/train-inputs.parquet')
-val_inputs = pd.read_parquet('data/splits/train-inputs.parquet')
-train_targets = pd.Series(pd.read_parquet('data/splits/train-targets.parquet')['target_points'])
-val_targets = pd.Series(pd.read_parquet('data/splits/train-targets.parquet')['target_points'])
+val_inputs = pd.read_parquet('data/splits/val-inputs.parquet')
 
 #Setup features
 initial_train_inputs = train_inputs.drop('element_type', axis=1)

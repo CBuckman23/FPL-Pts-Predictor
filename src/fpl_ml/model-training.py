@@ -44,19 +44,40 @@ def return_spearman_r(predictions, targets):
 
 #Load inputs and targets from parquet files
 baseline_val_inputs = pd.read_parquet('data/splits/val-inputs.parquet')
-baseline_train_targets = pd.read_parquet('data/splits/train-targets.parquet')
-baseline_val_targets = pd.read_parquet('data/splits/val-targets.parquet')
+baseline_train_targets = pd.Series(pd.read_parquet('data/splits/train-targets.parquet')['target_points'])
+baseline_val_targets = pd.Series(pd.read_parquet('data/splits/val-targets.parquet')['target_points'])
 
 initial_train_inputs = pd.read_parquet('data/splits/initial-model/initial_train_inputs.parquet')
 initial_val_inputs = pd.read_parquet('data/splits/initial-model/initial_val_inputs.parquet')
-initial_train_targets =pd.read_parquet('data/splits/train-targets.parquet')
-initial_val_targets = pd.read_parquet('data/splits/val-targets.parquet')
+initial_train_targets = pd.Series(pd.read_parquet('data/splits/train-targets.parquet')['target_points'])
+initial_val_targets = pd.Series(pd.read_parquet('data/splits/val-targets.parquet')['target_points'])
+
+gk_train_inputs = pd.read_parquet('data/splits/position-models/gk_train_inputs.parquet')
+gk_train_targets = pd.Series(pd.read_parquet('data/splits/position-models/gk_train_targets.parquet')['target_points'])
+gk_val_inputs = pd.read_parquet('data/splits/position-models/gk_val_inputs.parquet')
+gk_val_targets = pd.Series(pd.read_parquet('data/splits/position-models/gk_val_targets.parquet')['target_points'])
+
+def_train_inputs = pd.read_parquet('data/splits/position-models/def_train_inputs.parquet')
+def_train_targets = pd.Series(pd.read_parquet('data/splits/position-models/def_train_targets.parquet')['target_points'])
+def_val_inputs = pd.read_parquet('data/splits/position-models/def_val_inputs.parquet')
+def_val_targets = pd.Series(pd.read_parquet('data/splits/position-models/def_val_targets.parquet')['target_points'])
+
+mid_train_inputs = pd.read_parquet('data/splits/position-models/mid_train_inputs.parquet')
+mid_train_targets = pd.Series(pd.read_parquet('data/splits/position-models/mid_train_targets.parquet')['target_points'])
+mid_val_inputs = pd.read_parquet('data/splits/position-models/mid_val_inputs.parquet')
+mid_val_targets = pd.Series(pd.read_parquet('data/splits/position-models/mid_val_targets.parquet')['target_points'])
+
+fwd_train_inputs = pd.read_parquet('data/splits/position-models/fwd_train_inputs.parquet')
+fwd_train_targets = pd.Series(pd.read_parquet('data/splits/position-models/fwd_train_targets.parquet')['target_points'])
+fwd_val_inputs = pd.read_parquet('data/splits/position-models/fwd_val_inputs.parquet')
+fwd_val_targets = pd.Series(pd.read_parquet('data/splits/position-models/fwd_val_targets.parquet')['target_points'])
+
 #Baseline models
 baseline_predictions_mean = [baseline_train_targets.mean()]*len(baseline_val_targets) #Baseline is just predicting the mean
 baseline_predictions_last_week = baseline_val_inputs['total_points_2']
 baseline_targets = baseline_val_targets
 
-save_model_stats(baseline_predictions_mean, baseline_targets, 'baseline')
+save_model_stats(baseline_predictions_mean, baseline_targets, 'baseline_mean')
 save_model_stats(baseline_predictions_last_week,baseline_targets, 'baseline_last_week')
 
 #Train models
@@ -75,12 +96,19 @@ initial_ran_for_val_preds = initial_ran_for.predict(initial_val_inputs)
 save_model_stats(initial_ran_for_val_preds, initial_val_targets, 'initial_ran_for')
 joblib.dump(initial_ran_for, 'models/initial_ran_for.joblib')
 
-'''GK model
-train_inputs_gk = initial_train_inputs.loc[initial_train_inputs['element_type']==1]
-val_inputs_gk = initial_val_inputs.loc[og_val_inputs['element_type']==1]
-train_inputs_gk = train_inputs_gk[['total_points', 'total_points_2', 'minutes', 'minutes_2', 'expected_goals_conceded', 'expected_goals_conceded_2','target_fdr', 'target_was_home']]
-val_inputs_gk = val_inputs_gk[['total_points', 'total_points_2', 'minutes', 'minutes_2', 'expected_goals_conceded', 'expected_goals_conceded_2','target_fdr', 'target_was_home']]
+#Position models
+gk_ran_for = RandomForestRegressor(max_depth=2, random_state=42).fit(gk_train_inputs, gk_train_targets)
+gk_ran_for_val_preds = gk_ran_for.predict(gk_val_inputs)
+save_model_stats(gk_ran_for_val_preds, gk_val_targets, 'gk_ran_for')
 
-#train_targets_gk = og_train_targets.loc[og_train_df['element_type']==1]['target_points']
-#val_targets_gk = val_df.loc[val_df['element_type']==1]['target_points']'''
-print(initial_train_inputs.info())
+def_ran_for = RandomForestRegressor(max_depth=2, random_state=42).fit(def_train_inputs, def_train_targets)
+def_ran_for_val_preds = def_ran_for.predict(def_val_inputs)
+save_model_stats(def_ran_for_val_preds, def_val_targets, 'def_ran_for')
+
+mid_ran_for = RandomForestRegressor(max_depth=2, random_state=42).fit(mid_train_inputs, mid_train_targets)
+mid_ran_for_val_preds = mid_ran_for.predict(mid_val_inputs)
+save_model_stats(mid_ran_for_val_preds, mid_val_targets, 'mid_ran_for')
+
+fwd_ran_for = RandomForestRegressor(max_depth=2, random_state=42).fit(fwd_train_inputs, fwd_train_targets)
+fwd_ran_for_val_preds = fwd_ran_for.predict(fwd_val_inputs)
+save_model_stats(fwd_ran_for_val_preds, fwd_val_targets, 'fwd_ran_for')
